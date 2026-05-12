@@ -1,3 +1,5 @@
+// public/app.js
+
 async function downloadTikTok(){
 
 let url=document.getElementById('tiktokUrl').value
@@ -10,6 +12,13 @@ try{
 
 let res=await fetch(`https://www.tikwm.com/api/?url=${encodeURIComponent(url)}`)
 let data=await res.json()
+
+if(!data.data){
+
+result.innerHTML='Video tidak ditemukan'
+return
+
+}
 
 let video=data.data.play
 
@@ -50,6 +59,13 @@ try{
 let res=await fetch(`https://www.tikwm.com/api/?url=${encodeURIComponent(url)}`)
 let data=await res.json()
 
+if(!data.data){
+
+result.innerHTML='Video tidak ditemukan'
+return
+
+}
+
 let video=data.data.play
 
 result.innerHTML=`
@@ -83,6 +99,10 @@ result.innerHTML=`
 
 <h2>${query}</h2>
 
+<p>
+Open Spotify Search
+</p>
+
 <a class="download-btn"
 href="https://open.spotify.com/search/${encodeURIComponent(query)}"
 target="_blank">
@@ -103,29 +123,96 @@ result.innerHTML=`
 
 <h2>YTMP3</h2>
 
-<p>Public API MP3 banyak yang tidak stabil.</p>
+<p>
+Public API MP3 banyak yang tidak stabil.
+</p>
 
 `
 
 }
 
-function searchMusic(){
+async function searchMusic(){
 
 let query=document.getElementById('musicQuery').value
 let result=document.getElementById('musicResult')
 
 result.style.display='block'
+result.innerHTML='<div class="loading"></div>'
+
+try{
+
+let res=await fetch(
+`https://piped.video/api/v1/search?q=${encodeURIComponent(query)}&filter=music_songs`
+)
+
+let data=await res.json()
+
+if(!data.length){
+
+result.innerHTML='Music tidak ditemukan'
+return
+
+}
+
+let music=data[0]
+
+let thumb=music.thumbnail
+let title=music.title
+
+let videoId=''
+
+if(music.url.includes('watch?v=')){
+videoId=music.url.split('watch?v=')[1]
+}else{
+videoId=music.url.replace('/watch?v=','')
+}
+
+let audio=`https://inv.nadeko.net/latest_version?id=${videoId}&itag=140`
 
 result.innerHTML=`
 
-<h2>${query}</h2>
+<img src="${thumb}">
+
+<h2>${title}</h2>
+
+<audio
+id="audioPlayer"
+controls
+src="${audio}">
+</audio>
+
+<div style="
+display:flex;
+gap:10px;
+margin-top:15px;
+">
+
+<button onclick="
+document.getElementById('audioPlayer').play()
+">
+Play
+</button>
+
+<button onclick="
+document.getElementById('audioPlayer').pause()
+">
+Pause
+</button>
+
+</div>
 
 <a class="download-btn"
-href="https://m.youtube.com/results?search_query=${encodeURIComponent(query)}"
+href="https://m.youtube.com/watch?v=${videoId}"
 target="_blank">
-Open Search
+Open YouTube
 </a>
 
 `
+
+}catch(e){
+
+result.innerHTML='Search gagal'
+
+}
 
 }
