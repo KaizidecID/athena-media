@@ -1,5 +1,3 @@
-// public/app.js
-
 async function downloadTikTok(){
 
 let url=document.getElementById('tiktokUrl').value
@@ -99,10 +97,6 @@ result.innerHTML=`
 
 <h2>${query}</h2>
 
-<p>
-Open Spotify Search
-</p>
-
 <a class="download-btn"
 href="https://open.spotify.com/search/${encodeURIComponent(query)}"
 target="_blank">
@@ -124,7 +118,7 @@ result.innerHTML=`
 <h2>YTMP3</h2>
 
 <p>
-Public API MP3 banyak yang tidak stabil.
+Feature coming soon
 </p>
 
 `
@@ -141,57 +135,30 @@ result.innerHTML='<div class="loading"></div>'
 
 try{
 
-let res=await fetch(
-`https://piped.video/api/v1/search?q=${encodeURIComponent(query)}`
-)
-
+let res=await fetch(`/api/music?q=${encodeURIComponent(query)}`)
 let data=await res.json()
 
-let music=data.items ? data.items[0] : data[0]
-
-if(!music){
+if(!data.status){
 
 result.innerHTML='Music tidak ditemukan'
 return
 
 }
 
-let title=music.title
-let thumb=music.thumbnail || music.thumbnailUrl
-
-let videoId=''
-
-if(music.url){
-
-if(music.url.includes('watch?v=')){
-videoId=music.url.split('watch?v=')[1]
-}else{
-videoId=music.url
-.replace('/watch?v=','')
-.replace('/','')
-}
-
-}else if(music.id){
-
-videoId=music.id
-
-}
+let videoId=data.url.split('watch?v=')[1]
 
 result.innerHTML=`
 
-<img src="${thumb}">
+<img src="${data.thumbnail}">
 
-<h2>${title}</h2>
+<h2>${data.title}</h2>
+
+<p>${data.author}</p>
 
 <iframe
-width="100%"
-height="200"
-style="
-border:none;
-border-radius:20px;
-margin-top:15px;
-"
-src="https://www.youtube.com/embed/${videoId}?autoplay=0">
+id="ytplayer"
+height="220"
+src="https://www.youtube.com/embed/${videoId}">
 </iframe>
 
 <div style="
@@ -200,24 +167,18 @@ gap:10px;
 margin-top:15px;
 ">
 
-<button onclick="
-document.querySelector('iframe').src=
-'https://www.youtube.com/embed/${videoId}?autoplay=1'
-">
+<button onclick="playMusic('${videoId}')">
 Play
 </button>
 
-<button onclick="
-document.querySelector('iframe').src=
-'https://www.youtube.com/embed/${videoId}'
-">
+<button onclick="pauseMusic('${videoId}')">
 Pause
 </button>
 
 </div>
 
 <a class="download-btn"
-href="https://m.youtube.com/watch?v=${videoId}"
+href="${data.url}"
 target="_blank">
 Open YouTube
 </a>
@@ -226,11 +187,24 @@ Open YouTube
 
 }catch(e){
 
-result.innerHTML=`
-<h2>Search gagal</h2>
-<p>${e.message}</p>
-`
+result.innerHTML='Search gagal'
 
 }
+
+}
+
+function playMusic(id){
+
+document.getElementById(
+'ytplayer'
+).src=`https://www.youtube.com/embed/${id}?autoplay=1`
+
+}
+
+function pauseMusic(id){
+
+document.getElementById(
+'ytplayer'
+).src=`https://www.youtube.com/embed/${id}`
 
 }
