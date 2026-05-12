@@ -142,32 +142,40 @@ result.innerHTML='<div class="loading"></div>'
 try{
 
 let res=await fetch(
-`https://piped.video/api/v1/search?q=${encodeURIComponent(query)}&filter=music_songs`
+`https://piped.video/api/v1/search?q=${encodeURIComponent(query)}`
 )
 
 let data=await res.json()
 
-if(!data.length){
+let music=data.items ? data.items[0] : data[0]
+
+if(!music){
 
 result.innerHTML='Music tidak ditemukan'
 return
 
 }
 
-let music=data[0]
-
-let thumb=music.thumbnail
 let title=music.title
+let thumb=music.thumbnail || music.thumbnailUrl
 
 let videoId=''
+
+if(music.url){
 
 if(music.url.includes('watch?v=')){
 videoId=music.url.split('watch?v=')[1]
 }else{
-videoId=music.url.replace('/watch?v=','')
+videoId=music.url
+.replace('/watch?v=','')
+.replace('/','')
 }
 
-let audio=`https://inv.nadeko.net/latest_version?id=${videoId}&itag=140`
+}else if(music.id){
+
+videoId=music.id
+
+}
 
 result.innerHTML=`
 
@@ -175,11 +183,16 @@ result.innerHTML=`
 
 <h2>${title}</h2>
 
-<audio
-id="audioPlayer"
-controls
-src="${audio}">
-</audio>
+<iframe
+width="100%"
+height="200"
+style="
+border:none;
+border-radius:20px;
+margin-top:15px;
+"
+src="https://www.youtube.com/embed/${videoId}?autoplay=0">
+</iframe>
 
 <div style="
 display:flex;
@@ -188,13 +201,15 @@ margin-top:15px;
 ">
 
 <button onclick="
-document.getElementById('audioPlayer').play()
+document.querySelector('iframe').src=
+'https://www.youtube.com/embed/${videoId}?autoplay=1'
 ">
 Play
 </button>
 
 <button onclick="
-document.getElementById('audioPlayer').pause()
+document.querySelector('iframe').src=
+'https://www.youtube.com/embed/${videoId}'
 ">
 Pause
 </button>
@@ -211,7 +226,10 @@ Open YouTube
 
 }catch(e){
 
-result.innerHTML='Search gagal'
+result.innerHTML=`
+<h2>Search gagal</h2>
+<p>${e.message}</p>
+`
 
 }
 
